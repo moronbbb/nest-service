@@ -13,7 +13,7 @@ export class AppController {
   async alert(content: string) {
     try {
       await firstValueFrom(
-        this.httpService.post(process.env.WX_BOT_URL!, {
+        this.httpService.post('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ff0f99a4-b610-4f68-80a1-9d13571cbe35', {
           msgtype: 'text',
           text: {
             // mentioned_list: [],
