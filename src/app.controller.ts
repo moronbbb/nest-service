@@ -94,13 +94,6 @@ export class AppController {
         request
       }
     ))
-    this.alert(JSON.stringify(
-      {
-        _api: '/events/AzWechat031927zzz/callback',
-        body,
-        request
-      }
-    ))
     return this.appService.getHello();
   }
 
