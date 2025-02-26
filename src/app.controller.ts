@@ -3,7 +3,6 @@ import { AppService } from './app.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { Request, Response } from 'express';
-import { Xml2js } from 'xml2js';
 
 @Controller()
 export class AppController {

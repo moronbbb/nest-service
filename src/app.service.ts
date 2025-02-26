@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { Xml2js } from 'xml2js';
+import * as Xml2js from 'xml2js';
 
 @Injectable()
 export class AppService {
