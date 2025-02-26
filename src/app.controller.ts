@@ -1,11 +1,15 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
 import { Request, Response } from 'express';
+import { Xml2js } from 'xml2js';
 
 @Controller()
 export class AppController {
+  appId = 'wx93f555b291bc23cc'
+  token = 'AzWechat031927zzz'
+  key = 'Az77777777777777777777777777777777777777777'
   constructor(
     private readonly httpService: HttpService,
     private readonly appService: AppService,
@@ -46,12 +50,17 @@ export class AppController {
 
   @Post('/events/auth')
   async recieveEventsAuth(
+    @Body() body: string, @Query() query: any,
     @Req() req: Request,
     @Res() res: Response
   ) {
-
-    const xmlData = req.body; // 获取原始 XML 数据
-    const result = await this.appService.processMessage(xmlData, req.query);
+    const decryptedMessage = await this.appService.decryptMsg(
+      body,
+      query?.msg_signature,
+      query?.timestamp,
+      query?.nonce,
+    );
+    console.log('Decrypted Message:', decryptedMessage);
 
     const request = {
       url: req.url,
@@ -63,18 +72,14 @@ export class AppController {
       host: req.host,
       ip: req.ip,
     }
-    console
     console.log('/events/auth', request)
     this.alert(JSON.stringify(
       {
         _api: '/events/auth',
-        result,
-        request
+        request,
+        decryptedMessage
       }
     ))
-
-    res.type('text/xml'); // 设置响应类型为 XML
-    res.send(result); // 返回处理后的 XML 响应
   }
 
   @Post('/events/wx93f555b291bc23cc/callback')
@@ -102,5 +107,4 @@ export class AppController {
     ))
     return this.appService.getHello();
   }
-
 }
