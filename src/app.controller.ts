@@ -100,6 +100,12 @@ export class AppController {
     }
     console.log('/events/auth', request)
 
+    console.log('/events/auth next', [
+      body,
+      query?.msg_signature,
+      query?.timestamp,
+      query?.nonce,])
+
     const decryptedMessage = await this.appService.decryptMsg(
       body?.trim(),
       query?.msg_signature,
