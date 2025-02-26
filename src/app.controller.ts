@@ -36,9 +36,42 @@ export class AppController {
     return this.appService.getHello();
   }
 
+
   @Get('/events/auth')
-  getEventsAuth(): string {
-    return this.appService.getHello();
+  async getEventsAuth(
+    @Body() body: string, @Query() query: any,
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+    res.send('success')
+
+    const request = {
+      url: req.url,
+      headers: req.headers,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      cookies: req.cookies,
+      host: req.host,
+      ip: req.ip,
+    }
+    console.log('[GET]/events/auth', request)
+
+    const decryptedMessage = await this.appService.decryptMsg(
+      body?.trim(),
+      query?.msg_signature,
+      query?.timestamp,
+      query?.nonce,
+    );
+    console.log('[GET]Decrypted Message:', decryptedMessage);
+
+    this.alert(JSON.stringify(
+      {
+        _api: '/events/auth',
+        request,
+        decryptedMessage
+      }
+    ))
   }
 
   @Get('/events/callback')
@@ -68,7 +101,7 @@ export class AppController {
     console.log('/events/auth', request)
 
     const decryptedMessage = await this.appService.decryptMsg(
-      body,
+      body?.trim(),
       query?.msg_signature,
       query?.timestamp,
       query?.nonce,
