@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 @Controller()
 export class AppController {
@@ -45,51 +45,57 @@ export class AppController {
 
 
   @Post('/events/auth')
-  recieveEventsAuth(
-    @Body() body: any,
-    @Req() req: Request
-  ): string {
+  async recieveEventsAuth(
+    @Req() req: Request,
+    @Res() res: Response
+  ) {
+
+    const xmlData = req.body; // 获取原始 XML 数据
+    const result = await this.appService.processMessage(xmlData, req.query);
+
     const request = {
       url: req.url,
-      headers:req.headers,
-      body:req.body,
-      query:req.query,
-      params:req.params,
-      cookies:req.cookies,
-      host:req.host,
-      ip:req.ip,
+      headers: req.headers,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      cookies: req.cookies,
+      host: req.host,
+      ip: req.ip,
     }
     console
     console.log('/events/auth', request)
     this.alert(JSON.stringify(
       {
         _api: '/events/auth',
-        body,
+        result,
         request
       }
     ))
-    return this.appService.getHello();
+
+    res.type('text/xml'); // 设置响应类型为 XML
+    res.send(result); // 返回处理后的 XML 响应
   }
 
-  @Post('/events/AzWechat031927zzz/callback')
+  @Post('/events/wx93f555b291bc23cc/callback')
   recieveEventsCallback(
     @Body() body: any,
     @Req() req: Request
   ): string {
     const request = {
       url: req.url,
-      headers:req.headers,
-      body:req.body,
-      query:req.query,
-      params:req.params,
-      cookies:req.cookies,
-      host:req.host,
-      ip:req.ip,
+      headers: req.headers,
+      body: req.body,
+      query: req.query,
+      params: req.params,
+      cookies: req.cookies,
+      host: req.host,
+      ip: req.ip,
     }
-    console.log('/events/AzWechat031927zzz/callback', request)
+    console.log('/events/wx93f555b291bc23cc/callback', request)
     this.alert(JSON.stringify(
       {
-        _api: '/events/AzWechat031927zzz/callback',
+        _api: '/events/wx93f555b291bc23cc/callback',
         body,
         request
       }
