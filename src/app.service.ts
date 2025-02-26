@@ -42,6 +42,7 @@ export class AppService {
   async decryptMsg(sPostData: string, sMsgSignature: string, sTimeStamp: string, sNonce: string): Promise<any> {
     try {
       const parser = new Xml2js.Parser();
+      console.log('decryptMsg sPostData——raw:', sPostData);  // 调试打印
       const parsedData = await parser.parseStringPromise(sPostData);
       console.log('Parsed Data:', parsedData);  // 调试打印
   
