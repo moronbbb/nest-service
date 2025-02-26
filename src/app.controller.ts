@@ -53,13 +53,7 @@ export class AppController {
     @Req() req: Request,
     @Res() res: Response
   ) {
-    const decryptedMessage = await this.appService.decryptMsg(
-      body,
-      query?.msg_signature,
-      query?.timestamp,
-      query?.nonce,
-    );
-    console.log('Decrypted Message:', decryptedMessage);
+    res.send('success')
 
     const request = {
       url: req.url,
@@ -72,6 +66,15 @@ export class AppController {
       ip: req.ip,
     }
     console.log('/events/auth', request)
+
+    const decryptedMessage = await this.appService.decryptMsg(
+      body,
+      query?.msg_signature,
+      query?.timestamp,
+      query?.nonce,
+    );
+    console.log('Decrypted Message:', decryptedMessage);
+
     this.alert(JSON.stringify(
       {
         _api: '/events/auth',
