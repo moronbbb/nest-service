@@ -15,7 +15,7 @@ export class AppService {
 
   // AES 解密
   private decryptAES(encrypted: string, appid: string): string {
-    const decipher = crypto.createDecipheriv('aes-256-cbc', this.key, Buffer.from(encrypted.slice(0, 16), 'base64'));
+    const decipher = crypto.createDecipheriv('aes-256-cbc', `${this.key}=`, Buffer.from(encrypted.slice(0, 16), 'base64'));
     const decrypted = Buffer.concat([decipher.update(Buffer.from(encrypted.slice(16), 'base64')), decipher.final()]);
     const msgLen = decrypted.readUInt32BE(16);
     const message = decrypted.slice(20, 20 + msgLen).toString();
