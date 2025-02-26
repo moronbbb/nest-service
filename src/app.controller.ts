@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req } from '@nestjs/common';
 import { AppService } from './app.service';
 import { firstValueFrom } from 'rxjs';
 import { HttpService } from '@nestjs/axios';
+import { Request } from 'express';
 
 @Controller()
 export class AppController {
@@ -44,14 +45,62 @@ export class AppController {
 
 
   @Post('/events/auth')
-  recieveEventsAuth(@Body() reqBody: any): string {
-    this.alert(JSON.stringify(reqBody ?? ''))
+  recieveEventsAuth(
+    @Body() body: any,
+    @Req() req: Request
+  ): string {
+    const request = {
+      url: req.url,
+      headers:req.headers,
+      body:req.body,
+      query:req.query,
+      params:req.params,
+      cookies:req.cookies,
+      host:req.host,
+      ip:req.ip,
+    }
+    console
+    console.log('/events/auth', request)
+    this.alert(JSON.stringify(
+      {
+        _api: '/events/auth',
+        body,
+        request
+      }
+    ))
     return this.appService.getHello();
   }
 
-  @Post('/events/callback')
-  recieveEventsCallback(@Body() reqBody: any): string {
-    this.alert(JSON.stringify(reqBody ?? ''))
+  @Post('/events/AzWechat031927zzz/callback')
+  recieveEventsCallback(
+    @Body() body: any,
+    @Req() req: Request
+  ): string {
+    const request = {
+      url: req.url,
+      headers:req.headers,
+      body:req.body,
+      query:req.query,
+      params:req.params,
+      cookies:req.cookies,
+      host:req.host,
+      ip:req.ip,
+    }
+    console.log('/events/AzWechat031927zzz/callback', request)
+    this.alert(JSON.stringify(
+      {
+        _api: '/events/AzWechat031927zzz/callback',
+        body,
+        request
+      }
+    ))
+    this.alert(JSON.stringify(
+      {
+        _api: '/events/AzWechat031927zzz/callback',
+        body,
+        request
+      }
+    ))
     return this.appService.getHello();
   }
 
