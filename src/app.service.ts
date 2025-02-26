@@ -40,18 +40,32 @@ export class AppService {
 
   // 解密消息
   async decryptMsg(sPostData: string, sMsgSignature: string, sTimeStamp: string, sNonce: string): Promise<any> {
-    const parser = new Xml2js.Parser();
-    const parsedData = await parser.parseStringPromise(sPostData);
-    const encrypt = parsedData.xml.Encrypt[0];
-
-    const signature = this.getSHA1(this.token, sTimeStamp, sNonce, encrypt);
-    if (signature !== sMsgSignature) {
-      throw new Error('Invalid signature');
+    try {
+      const parser = new Xml2js.Parser();
+      const parsedData = await parser.parseStringPromise(sPostData);
+      console.log('Parsed Data:', parsedData);  // 调试打印
+  
+      // 确保 Encrypt 存在
+      const encrypt = parsedData?.xml?.Encrypt?.[0];
+      if (!encrypt) {
+        throw new Error('Missing Encrypt field in the XML');
+      }
+  
+      // 验证签名
+      const signature = this.getSHA1(this.token, sTimeStamp, sNonce, encrypt);
+      if (signature !== sMsgSignature) {
+        throw new Error('Invalid signature');
+      }
+  
+      // 解密消息
+      const decryptedMessage = this.decryptAES(encrypt, this.appId);
+      return decryptedMessage;
+    } catch (error) {
+      console.error('Error in decryptMsg:', error.message);
+      throw error;  // 重新抛出错误
     }
-
-    const decryptedMessage = this.decryptAES(encrypt, this.appId);
-    return decryptedMessage;
   }
+
 
   // 加密消息
   async encryptMsg(sReplyMsg: string, sNonce: string, timestamp?: string): Promise<any> {
