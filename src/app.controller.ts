@@ -10,32 +10,18 @@ export class AppController {
   token = 'AzWechat031927zzz'
   key = 'Az77777777777777777777777777777777777777777'
   constructor(
-    private readonly httpService: HttpService,
     private readonly appService: AppService,
   ) { }
-
-  async alert(content: string) {
-    try {
-      await firstValueFrom(
-        this.httpService.post('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ff0f99a4-b610-4f68-80a1-9d13571cbe35', {
-          msgtype: 'text',
-          text: {
-            // mentioned_list: [],
-            content: `${content}`,
-          },
-        }),
-      );
-    } catch (error) {
-      console.error(`[AlertService]${error?.toString()}`, error);
-      // this.logger.error(error);
-    }
-  }
 
   @Get()
   getHello(): string {
     return this.appService.getHello();
   }
 
+  @Get('/moron/test-ticket')
+  async getMoronTicket() {
+    return this.appService.getTicket()
+  }
 
   @Get('/events/auth')
   async getEventsAuth(
@@ -64,14 +50,6 @@ export class AppController {
       query?.nonce,
     );
     console.log('[GET]Decrypted Message:', decryptedMessage);
-
-    this.alert(JSON.stringify(
-      {
-        _api: '/events/auth',
-        request,
-        decryptedMessage
-      }
-    ))
   }
 
   @Get('/events/callback')
@@ -113,14 +91,6 @@ export class AppController {
       query?.nonce,
     );
     console.log('Decrypted Message:', decryptedMessage);
-
-    this.alert(JSON.stringify(
-      {
-        _api: '/events/auth',
-        request,
-        decryptedMessage
-      }
-    ))
   }
 
   @Post('/events/wx93f555b291bc23cc/callback')
@@ -139,13 +109,6 @@ export class AppController {
       ip: req.ip,
     }
     console.log('/events/wx93f555b291bc23cc/callback', request)
-    this.alert(JSON.stringify(
-      {
-        _api: '/events/wx93f555b291bc23cc/callback',
-        body,
-        request
-      }
-    ))
     return this.appService.getHello();
   }
 }

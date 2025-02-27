@@ -1,5 +1,7 @@
+import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import * as crypto from 'crypto';
+import { firstValueFrom } from 'rxjs';
 import * as Xml2js from 'xml2js';
 
 @Injectable()
@@ -7,6 +9,11 @@ export class AppService {
   appId = 'wx93f555b291bc23cc'
   token = 'AzWechat031927zzz'
   key = 'Az77777777777777777777777777777777777777777'
+  private ticket?: string;
+  constructor(
+    private readonly httpService: HttpService,
+  ) { }
+
   // 计算 SHA1 签名
   private getSHA1(token: string, timestamp: string, nonce: string, encrypt: string): string {
     const str = [token, timestamp, nonce, encrypt].join('');
@@ -18,7 +25,7 @@ export class AppService {
     console.log('this.key', this.key.length);
 
     // 1. 解码 EncodingAESKey，并生成 AES 密钥
-    const aesKey = Buffer.from(`${this.key}=`, 'base64');
+    const aesKey = Buffer.from(`${this.key}`, 'base64');
     console.log('aesKey', aesKey, aesKey.length);
 
     // 2. 解码加密消息
@@ -28,13 +35,15 @@ export class AppService {
     // 3. 提取 IV（前 16 字节）
     const iv = TmpMsg.slice(0, 16);
     // 4. 提取密文（其余部分）
-    const ciphertext = TmpMsg.slice(16);
+    // const ciphertext = TmpMsg.slice(17);
 
     // 5. 创建解密器，并解密数据
     const decipher = crypto.createDecipheriv('aes-256-cbc', aesKey, iv);
     console.log('decipher', decipher, '\niv', iv.length, iv);
 
-    const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    const decrypted = Buffer.concat([
+      decipher.update(TmpMsg),
+      decipher.final()]);
     console.log('decrypted', decrypted.toString());
 
     // 6. 解析消息
@@ -82,17 +91,23 @@ export class AppService {
       console.log('decryptMsg getSHA1:', this.token, sTimeStamp, sNonce, encrypt);  // 调试打印
       // 验证签名
       const signature = this.getSHA1(this.token, sTimeStamp, sNonce, encrypt);
-      console.log('decryptMsg signature:', signature, sMsgSignature);  // 调试打印
+      console.log(`decryptMsg signature: ${signature !== sMsgSignature}\n`, signature, sMsgSignature);  // 调试打印
 
-      const testSignature = this.getSHA1("1590219412", "1715943329", "AAAAA", "D7yzvUNAL930rd28wf21s4hvXhz0L6Uit/p2Di6C5DHyYGpEgdBRnKjBec34JwoQXicwaZC7fOVihW80F4VtsdvE//1vr7oAbqjDv8KenVp+ajKYpJnyQ4zMRhIC+a31fCVOMC03FfzV/QuC94kBP55a+Za3sJgvAn+ZbsNqZI5DkyuzkhQN8OBqCzFhizGmy0xpM0MEA4agpvE+RuNO1rhHTtuJB5yltw1FiYzecSXJ+y/D2r81VkRn2eYjh2ltsoyfbDR7Is6ookXIFxTfyeNyeHxMeT4KN5WpCDmSbTcUYrbBUlkGLJ9n/rU8YOywma6G7aTb7KZKOqCxgfoUlYEZPk4FUL/TK7ShriFDMVCLyjQJ15Ob++agDWtcxhfUfe6HIoIpRW8mKNBQiY/Jd1svvuskA1wLef1RTtzKfMpagSCX/laZINmdnX4zrF6kIaR9P4xQrWXbsTFHTYe0Mg==");
-      console.log('testSignature', testSignature)
-      // if (signature !== sMsgSignature) {
-      //   throw new Error('Invalid signature');
-      // }
+      if (signature !== sMsgSignature) {
+        throw new Error('Invalid signature');
+      }
 
       // 解密消息
       const decryptedMessage = this.decryptAES(encrypt, this.appId);
-      return decryptedMessage;
+      const newTicket = this.parseXml(decryptedMessage);
+
+      if (typeof newTicket === 'string') {
+        if (newTicket !== this.ticket) {
+          this.alert(`[WECHAT] moron.icu - recieve new ticket\nold ticket: ${this.ticket}\nnew ticket: ${newTicket}`)
+          this.ticket = newTicket
+        }
+      }
+      return newTicket
     } catch (error) {
       console.error('Error in decryptMsg:', error.message);
       throw error;  // 重新抛出错误
@@ -123,7 +138,60 @@ export class AppService {
     return xml;
   }
 
+  /**
+   * 解析 XML 字符串并提取指定字段
+   * @param xmlString XML 字符串
+   * @returns 提取字段后的对象
+   */
+  async parseXml(xmlString: string) {
+    console.log('parseXml start')
+    const parser = new Xml2js.Parser();
+    console.log('parseXml parser')
+
+    try {
+      // 解析 XML 字符串为 JavaScript 对象
+      const result = await parser.parseStringPromise(xmlString);
+      console.log('parseXml result', result)
+
+      // 获取指定字段
+      // const toUserName = result.xml.ToUserName[0];  // 获取 ToUserName
+      // const fromUserName = result.xml.FromUserName[0];  // 获取 FromUserName
+      // const createTime = result.xml.CreateTime[0];  // 获取 CreateTime
+      // const msgType = result.xml.MsgType[0];  // 获取 MsgType
+      // const content = result.xml.Content[0];  // 获取 Content
+      // const msgId = result.xml.MsgId[0];  // 获取 MsgId
+
+      // 返回所需字段
+      return result?.xml?.ComponentVerifyTicket?.[0]
+    } catch (error) {
+      console.error('XML Parsing Error:', error);
+      throw new Error('Error parsing XML');
+    }
+  }
+
+  getTicket() {
+    return this.ticket
+  }
+
   getHello(): string {
     return 'Service Alive';
+  }
+
+
+  async alert(content: string) {
+    try {
+      await firstValueFrom(
+        this.httpService.post('https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=ff0f99a4-b610-4f68-80a1-9d13571cbe35', {
+          msgtype: 'text',
+          text: {
+            // mentioned_list: [],
+            content: `${content}`,
+          },
+        }),
+      );
+    } catch (error) {
+      console.error(`[AlertService]${error?.toString()}`, error);
+      // this.logger.error(error);
+    }
   }
 }
